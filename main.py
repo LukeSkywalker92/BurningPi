@@ -9,13 +9,13 @@ from kivy.properties import NumericProperty, BooleanProperty,\
     BoundedNumericProperty, StringProperty, ListProperty, ObjectProperty,\
     DictProperty, AliasProperty
 import time
-from random import random
+import json
 
 class BurningPiApp(App):
     #temperature properties
-    oil_temp_set = NumericProperty()
+    oil_temp_set = NumericProperty(20)
     oil_temp_is = NumericProperty()
-    water_temp_max = NumericProperty()
+    water_temp_max = NumericProperty(20)
     water_temp_is = NumericProperty()
     
     #status properties
@@ -42,6 +42,8 @@ class BurningPiApp(App):
         
         #self.start_time.set(BurningPiApp, time.time())
         self.start_time = time.time()
+        
+        self.get_config()
         
         layout = self.make_layout()
         
@@ -97,6 +99,15 @@ class BurningPiApp(App):
         graph.add_plot(plot)
         layout.add_widget(graph)
         return layout
+
+    def get_config(self):
+        with open('config.json') as config_file:
+            config = json.load(config_file)
+        self.temp_sensor_oil = config["sensor_oil"]
+        self.temp_sensor_water = config["sensor_water"]
+        print self.temp_sensor_oil
+        print self.temp_sensor_water
+
 
     
     
