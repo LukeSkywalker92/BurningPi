@@ -1,8 +1,8 @@
 from random import random
 import  time
 
-starttemp1 = 20
-starttemp2 = 50
+starttemp1 = 50
+starttemp2 = 20
 
 while True:
     temp1 = starttemp1+5*random()
@@ -13,4 +13,4 @@ while True:
     f = open("testdata/sensor2","w+")
     f.write(str(temp2))
     f.close()
-    time.sleep(2)
+    time.sleep(1)

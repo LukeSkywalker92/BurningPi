@@ -1,4 +1,5 @@
 {
+  "fullscreen":false,
   "sensor_oil": "tests/testdata/sensor1",
   "sensor_water": "tests/testdata/sensor2",
   "gpib_oil": 23,
