@@ -25,6 +25,7 @@ class BurningPiApp(App):
     oil_temp_is = NumericProperty(0.0)
     water_temp_max = NumericProperty(20)
     water_temp_is = NumericProperty()
+    time_is = NumericProperty(0)
     
     #status properties
     heat_auto = BooleanProperty(False)
@@ -47,7 +48,7 @@ class BurningPiApp(App):
     
     
     def build(self):
-        
+        Config.set('graphics', 'fullscreen', 'auto')
         
         #self.start_time.set(BurningPiApp, time.time())
         self.start_time = time.time()
@@ -82,7 +83,9 @@ class BurningPiApp(App):
             self.oil_temps.append(oil_temp)
             self.oil_temp_is = oil_temp
             
-            self.times.append(float(time.time()-self.start_time)) 
+            time_is = float(time.time()-self.start_time)
+            self.times.append(time_is) 
+            self.time_is = time_is
             self.oil_temps_set.append(self.set_oil_temp_slider.value)
             
             self.refresh_plot_points()
@@ -104,6 +107,10 @@ class BurningPiApp(App):
         self.graph_water.ymax = round(max(self.water_temps)+1)
         self.graph_water.ymin = round(min(self.water_temps)-1)
         self.graph_water.y_ticks_major = int(round((self.graph_water.ymax-self.graph_water.ymin)/5))
+        
+    def on_time_is(self, instance, value):
+        self.time_label.text = str(int(self.time_is/60))+" min"
+        
         
     def on_oil_temp_is(self, instance, value):
         self.oil_temp_label.text = str(int(self.oil_temp_is))+" °C"
@@ -132,6 +139,17 @@ class BurningPiApp(App):
         
     def on_set_oil_temp_slider(self, *args):
         self.set_oil_temp_label.text = str(int(args[1]))+" °C"
+        
+    def on_set_water_temp_slider(self, *args):
+        self.set_water_temp_label.text = str(int(args[1]))+" °C"
+        
+    def on_set_delta_heating_slider(self, *args):
+        self.set_delta_heating_label.text = str(int(args[1]))+" °C"
+        
+    def on_set_delta_cooling_slider(self, *args):
+        self.set_delta_cooling_label.text = str(int(args[1]))+" °C"
+
+
 
     def make_layout(self):
         layout = BoxLayout(orientation="vertical")
@@ -143,44 +161,97 @@ class BurningPiApp(App):
         
         on_off_layout = BoxLayout(orientation="vertical")
         
-        button_heating = Button(background_normal="pic/flame_off.png", background_down="pic/flame_pressed.png",allow_stretch=False, size_hint=(None,None), border=[0,0,0,0])
+        button_heating = Button(background_normal="pic/flame_off.png", background_down="pic/flame_pressed.png",allow_stretch=False, size_hint=(None,1), border=[0,0,0,0])
         button_heating.bind(on_press=self.on_button_heating)
         self.button_heating = button_heating
         
-        button_pump = Button(background_normal="pic/pump_off.png", background_down="pic/pump_pressed.png",allow_stretch=False, size_hint=(None,None), border=[0,0,0,0])
+        button_pump = Button(background_normal="pic/pump_off.png", background_down="pic/pump_pressed.png",allow_stretch=False, size_hint=(None,1), border=[0,0,0,0])
         button_pump.bind(on_press=self.on_button_pump)
         self.button_pump = button_pump
         
         
         temperatur_panel = BoxLayout(orientation="vertical")
         
-        oil_temp_label = Label(text = "0 Grad", color=[0,0,0,1], font_size = 30, size_hint=(None,None))
+        oil_temp_label = Label(text = "0 Grad", color=[0,0,0,1], font_size = 30)
         self.oil_temp_label = oil_temp_label
         temperatur_panel.add_widget(oil_temp_label)
         
-        water_temp_label = Label(text = "0 Grad", color=[0,0,0,1], font_size = 30, size_hint=(None,None))
+        water_temp_label = Label(text = "0 Grad", color=[0,0,0,1], font_size = 30)
         self.water_temp_label = water_temp_label
         temperatur_panel.add_widget(water_temp_label)
         
+        time_label = Label(text = "0 min", color=[0,0,0,1], font_size = 30)
+        self.time_label = time_label
+        temperatur_panel.add_widget(time_label)
+        
+        heating_label = Label(text = "Heizt", color=[0,0,0,1], font_size = 30)
+        temperatur_panel.add_widget(heating_label)
+        
+        
+        names_panel = BoxLayout(orientation="vertical")
+        name_oil = Label(text = "Öl:", color=[0,0,0,1], font_size = 30)
+        names_panel.add_widget(name_oil)
+        name_water = Label(text = "Wasser:", color=[0,0,0,1], font_size = 30)
+        names_panel.add_widget(name_water)
+        name_time = Label(text = "Zeit:", color=[0,0,0,1], font_size = 30)
+        names_panel.add_widget(name_time)
+        name_heating = Label(text = "Heizen:", color=[0,0,0,1], font_size = 30)
+        names_panel.add_widget(name_heating)
+        
+        
+        
         set_value_panel = BoxLayout(orientation="vertical")
         set_value_oil_panel = BoxLayout(orientation="horizontal")
+        set_value_water_panel = BoxLayout(orientation="horizontal")
+        set_delta_heating_panel = BoxLayout(orientation="horizontal")
+        set_delta_cooling_panel = BoxLayout(orientation="horizontal")
         set_value_panel.add_widget(set_value_oil_panel)
+        set_value_panel.add_widget(set_value_water_panel)
+        set_value_panel.add_widget(set_delta_heating_panel)
+        set_value_panel.add_widget(set_delta_cooling_panel)
         
-        set_oil_temp_label = Label(text = "0 °C", color=[0,0,0,1], font_size = 30, size_hint = (None,None))
-        self.set_oil_temp_label = set_oil_temp_label
-        set_value_oil_panel.add_widget(set_oil_temp_label)
+        
         set_oil_temp_slider = Slider(min = 0, max = 150, value = 50)
         self.set_oil_temp_slider = set_oil_temp_slider
         set_oil_temp_slider.bind(value=self.on_set_oil_temp_slider)
         set_value_oil_panel.add_widget(set_oil_temp_slider)
+        set_oil_temp_label = Label(text = "50 °C", color=[0,0,0,1], font_size = 30, size_hint=(None,1))
+        self.set_oil_temp_label = set_oil_temp_label
+        set_value_oil_panel.add_widget(set_oil_temp_label)
         
+        set_water_temp_slider = Slider(min = 0, max = 50, value = 10)
+        self.set_water_temp_slider = set_water_temp_slider
+        set_water_temp_slider.bind(value=self.on_set_water_temp_slider)
+        set_value_water_panel.add_widget(set_water_temp_slider)
+        set_water_temp_label = Label(text = "10 °C", color=[0,0,0,1], font_size = 30, size_hint=(None,1))
+        self.set_water_temp_label = set_water_temp_label
+        set_value_water_panel.add_widget(set_water_temp_label)
         
+        name_delta_heating_label = Label(text = u"\u0394"+"Th", color=[0,0,0,1], font_size = 30, size_hint=(None,1))
+        set_delta_heating_panel.add_widget(name_delta_heating_label)
+        set_delta_heating_slider = Slider(min = 0, max = 10, value = 5)
+        self.set_delta_heating_slider = set_delta_heating_slider
+        set_delta_heating_slider.bind(value=self.on_set_delta_heating_slider)
+        set_delta_heating_panel.add_widget(set_delta_heating_slider)
+        set_delta_heating_label = Label(text = "5 °C", color=[0,0,0,1], font_size = 30, size_hint=(None,1))
+        self.set_delta_heating_label = set_delta_heating_label
+        set_delta_heating_panel.add_widget(set_delta_heating_label)
         
+        name_delta_cooling_label = Label(text = u"\u0394"+"Tk", color=[0,0,0,1], font_size = 30, size_hint=(None,1))
+        set_delta_cooling_panel.add_widget(name_delta_cooling_label)
+        set_delta_cooling_slider = Slider(min = 0, max = 10, value = 5)
+        self.set_delta_cooling_slider = set_delta_cooling_slider
+        set_delta_cooling_slider.bind(value=self.on_set_delta_cooling_slider)
+        set_delta_cooling_panel.add_widget(set_delta_cooling_slider)
+        set_delta_cooling_label = Label(text = "5 °C", color=[0,0,0,1], font_size = 30, size_hint=(None,1))
+        self.set_delta_cooling_label = set_delta_cooling_label
+        set_delta_cooling_panel.add_widget(set_delta_cooling_label)
         
         
         
         
         left_settings.add_widget(on_off_layout)
+        left_settings.add_widget(names_panel)
         left_settings.add_widget(temperatur_panel)
         settingslayout.add_widget(set_value_panel)
         on_off_layout.add_widget(button_heating)
