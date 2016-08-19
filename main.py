@@ -18,6 +18,7 @@ from kivy.uix.slider import Slider
 
 
 
+
 class BurningPiApp(App):
     #temperature properties
     oil_temp_set = NumericProperty(20)
@@ -31,7 +32,7 @@ class BurningPiApp(App):
     pumping = BooleanProperty(False)
     
     #Start Time
-    start_time = NumericProperty(1)
+    start_time = NumericProperty()
     
     #Lists for Temperature and Time
     times = ListProperty()
@@ -47,6 +48,7 @@ class BurningPiApp(App):
     
     def build(self):
         
+        
         #self.start_time.set(BurningPiApp, time.time())
         self.start_time = time.time()
         
@@ -61,6 +63,7 @@ class BurningPiApp(App):
 
     def refresh_plot_points(self):
         self.plot_oil.points = [(self.times[x], self.oil_temps[x]) for x in range(0, len(self.times))]
+        self.plot_oil_set.points = [(self.times[x], self.oil_temps_set[x]) for x in range(0, len(self.times))]
         self.plot_water.points = [(self.times[x], self.water_temps[x]) for x in range(0, len(self.times))]
 
     def read_sensor(self, *args):
@@ -80,6 +83,7 @@ class BurningPiApp(App):
             self.oil_temp_is = oil_temp
             
             self.times.append(float(time.time()-self.start_time)) 
+            self.oil_temps_set.append(self.set_oil_temp_slider.value)
             
             self.refresh_plot_points()
         except:
@@ -91,15 +95,15 @@ class BurningPiApp(App):
         
         self.graph_oil.xmax = round(max(self.times)+1)
         self.graph_oil.x_ticks_major = int(self.graph_oil.xmax/10)
-        self.graph_oil.ymax = max(self.oil_temps)+1
-        self.graph_oil.ymin = min(self.oil_temps)-1
-        self.graph_oil.y_ticks_major = (self.graph_oil.ymax-self.graph_oil.ymin)/10
+        self.graph_oil.ymax = round(max(max(self.oil_temps),max(self.oil_temps_set))+1)
+        self.graph_oil.ymin = round(min(min(self.oil_temps),min(self.oil_temps_set)))
+        self.graph_oil.y_ticks_major = int(round((self.graph_oil.ymax-self.graph_oil.ymin)/5))
         
         self.graph_water.xmax = round(max(self.times)+1)
         self.graph_water.x_ticks_major = int(self.graph_water.xmax/10)
-        self.graph_water.ymax = max(self.water_temps)+1
-        self.graph_water.ymin = min(self.water_temps)-1
-        self.graph_water.y_ticks_major = (self.graph_water.ymax-self.graph_water.ymin)/10
+        self.graph_water.ymax = round(max(self.water_temps)+1)
+        self.graph_water.ymin = round(min(self.water_temps)-1)
+        self.graph_water.y_ticks_major = int(round((self.graph_water.ymax-self.graph_water.ymin)/5))
         
     def on_oil_temp_is(self, instance, value):
         self.oil_temp_label.text = str(int(self.oil_temp_is))+" °C"
@@ -111,24 +115,39 @@ class BurningPiApp(App):
         print('My property a changed to', value)
         
     def on_button_heating(self, *args):
-        self.button_heating.background_normal = "pic/flame_pressed.png"
+        if self.heat_auto:
+            self.heat_auto = False
+            self.button_heating.background_normal = "pic/flame_off.png"
+        else:
+            self.heat_auto = True
+            self.button_heating.background_normal = "pic/flame_on.png"
         
     def on_button_pump(self, *args):
-        self.button_pump.background_normal = "pic/flame_pressed.png"
+        if self.pumping:
+            self.pumping = False
+            self.button_pump.background_normal = "pic/pump_off.png"
+        else:
+            self.pumping = True
+            self.button_pump.background_normal = "pic/pump_on.png"
+        
+    def on_set_oil_temp_slider(self, *args):
+        self.set_oil_temp_label.text = str(int(args[1]))+" °C"
 
     def make_layout(self):
         layout = BoxLayout(orientation="vertical")
         
         settingslayout = BoxLayout(orientation="horizontal")
+        left_settings = BoxLayout(orientation="horizontal")
+        settingslayout.add_widget(left_settings)
         
         
         on_off_layout = BoxLayout(orientation="vertical")
         
-        button_heating = Button(background_normal="pic/flame_normal.png", background_down="pic/flame_pressed.png",allow_stretch=False, size_hint=(None,None))
+        button_heating = Button(background_normal="pic/flame_off.png", background_down="pic/flame_pressed.png",allow_stretch=False, size_hint=(None,None), border=[0,0,0,0])
         button_heating.bind(on_press=self.on_button_heating)
         self.button_heating = button_heating
         
-        button_pump = Button(background_normal="pic/flame_normal.jpg", background_down="pic/flame_pressed.jpg",allow_stretch=False, size_hint=(None,None))
+        button_pump = Button(background_normal="pic/pump_off.png", background_down="pic/pump_pressed.png",allow_stretch=False, size_hint=(None,None), border=[0,0,0,0])
         button_pump.bind(on_press=self.on_button_pump)
         self.button_pump = button_pump
         
@@ -147,19 +166,22 @@ class BurningPiApp(App):
         set_value_oil_panel = BoxLayout(orientation="horizontal")
         set_value_panel.add_widget(set_value_oil_panel)
         
-        set_oil_temp_label = Label(text = "0 °C", color=[0,0,0,1], font_size = 30)
+        set_oil_temp_label = Label(text = "0 °C", color=[0,0,0,1], font_size = 30, size_hint = (None,None))
         self.set_oil_temp_label = set_oil_temp_label
         set_value_oil_panel.add_widget(set_oil_temp_label)
         set_oil_temp_slider = Slider(min = 0, max = 150, value = 50)
         self.set_oil_temp_slider = set_oil_temp_slider
+        set_oil_temp_slider.bind(value=self.on_set_oil_temp_slider)
         set_value_oil_panel.add_widget(set_oil_temp_slider)
         
         
         
         
         
-        settingslayout.add_widget(on_off_layout)
-        settingslayout.add_widget(temperatur_panel)
+        
+        
+        left_settings.add_widget(on_off_layout)
+        left_settings.add_widget(temperatur_panel)
         settingslayout.add_widget(set_value_panel)
         on_off_layout.add_widget(button_heating)
         on_off_layout.add_widget(button_pump)
@@ -180,8 +202,8 @@ class BurningPiApp(App):
             'tick_color':rgb('808080'), # ticks and grid
             'border_color':rgb('808080')}
         graph_oil = Graph( 
-            xlabel="X",
-            ylabel="Y", 
+            xlabel="Zeit [s]",
+            ylabel="Öltemperatur [°C]", 
             x_ticks_major=1, 
             y_ticks_major=1, 
             y_grid_label=True, 
@@ -197,8 +219,8 @@ class BurningPiApp(App):
         self.graph_oil = graph_oil
         
         graph_water = Graph(
-            xlabel="X", 
-            ylabel="Y", 
+            xlabel="Zeit [s]", 
+            ylabel="Wassertemperatur [°C]", 
             x_ticks_major=1, 
             y_ticks_major=10, 
             y_grid_label=True, 
@@ -213,13 +235,17 @@ class BurningPiApp(App):
             **graph_theme)
         self.graph_water = graph_water
         
-        plot_oil = SmoothLinePlot(color=rgb('000000'))
+        plot_oil = SmoothLinePlot(color=rgb('0000ff'))
         self.plot_oil = plot_oil
+        
+        plot_oil_set = SmoothLinePlot(color=rgb('00ff00'))
+        self.plot_oil_set = plot_oil_set
         
         plot_water = SmoothLinePlot(color=rgb('000000'))
         self.plot_water = plot_water
         plot_water.points = [(x, x * x) for x in range(0, 11)]
         graph_oil.add_plot(plot_oil)
+        graph_oil.add_plot(plot_oil_set)
         graph_water.add_plot(plot_water)
         layout.add_widget(graph_oil)
         layout.add_widget(graph_water)
@@ -239,7 +265,7 @@ class BurningPiApp(App):
     def get_config(self):
         with open('config.json') as config_file:
             config = json.load(config_file)
-        if bool(config["fullscreen"]):
+        if config["fullscreen"]:
             Config.set('graphics', 'fullscreen', 'auto')
         self.temp_sensor_oil = config["sensor_oil"]
         self.temp_sensor_water = config["sensor_water"]

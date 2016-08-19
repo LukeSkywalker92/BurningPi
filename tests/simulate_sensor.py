@@ -5,7 +5,7 @@ starttemp1 = 50
 starttemp2 = 20
 
 while True:
-    temp1 = starttemp1+5*random()
+    temp1 = starttemp1+50*random()
     temp2 = starttemp2+5*random()
     f = open("testdata/sensor1","w+")
     f.write(str(temp1))
