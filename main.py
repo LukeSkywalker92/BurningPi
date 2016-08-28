@@ -1,4 +1,11 @@
 # coding: utf8
+from kivy.config import Config
+from kivy.uix.image import Image
+from pprint import pprint
+Config.set('graphics', 'height', 540)
+Config.set('graphics','width', 960)
+Config.set('graphics', 'resizable', '0')
+Config.write()
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -9,17 +16,13 @@ from kivy.utils import get_color_from_hex as rgb
 from kivy.properties import NumericProperty, BooleanProperty,\
     BoundedNumericProperty, StringProperty, ListProperty, ObjectProperty,\
     DictProperty, AliasProperty
-from kivy.config import Config
 import time
 import json
 from kivy.uix.label import Label
 from kivy.graphics import Color, Rectangle
 from kivy.uix.slider import Slider
 
-Config.set('graphics', 'height', 540)
-Config.set('graphics','width', 960)
-Config.set('graphics', 'resizable', '0')
-Config.write()
+
 
 
 
@@ -31,11 +34,14 @@ class BurningPiApp(App):
     water_temp_max = NumericProperty(20)
     water_temp_is = NumericProperty()
     time_is = NumericProperty(0)
+    delta_heating = NumericProperty(5)
+    delta_cooling = NumericProperty(5)
     
     #status properties
     heat_auto = BooleanProperty(False)
     heating = BooleanProperty(False)
     pumping = BooleanProperty(False)
+    water_alarm = BooleanProperty(False)
     
     #Start Time
     start_time = NumericProperty()
@@ -63,6 +69,7 @@ class BurningPiApp(App):
         
         Clock.schedule_interval(self.refresh_graph_scale, 1)
         Clock.schedule_interval(self.check_water_temp, 1)
+        Clock.schedule_interval(self.check_oil_temp, 1)
         
         return layout
     
@@ -97,11 +104,40 @@ class BurningPiApp(App):
         except:
             self.read_sensor()
 
+    def check_oil_temp(self, *args):
+        print(self.heat_auto)
+        print(self.heating)
+        if self.heat_auto:
+            if self.heating:
+                if self.oil_temp_is > (self.oil_temp_set - self.delta_heating):
+                    self.change_heating_status()
+            else:
+                if int(self.oil_temp_is) < int(self.oil_temp_set - self.delta_cooling):
+                    self.change_heating_status()
+            
+
     def check_water_temp(self, *args):
         if self.water_temp_is >= self.water_temp_max:
-            self.graph_water.background_color = rgb('fa5858')
+            if self.water_alarm:
+                self.graph_water.background_color = rgb('ffffff')
+                self.water_alarm = False
+            else:
+                self.graph_water.background_color = rgb('ff0000')
+                self.water_alarm = True
         else:
             self.graph_water.background_color = rgb('ffffff')
+    
+    def change_heating_status(self):
+        if self.heating:
+            self.heating_image.source = 'pic/heating_off.png'
+            #GPIB
+            self.heating = False  
+        else:
+            self.heating_image.source = 'pic/heating_on.png'
+            #GPIB
+            self.heating = True
+            
+    
     
     def refresh_graph_scale(self, *args):
         self.read_sensor()
@@ -135,6 +171,8 @@ class BurningPiApp(App):
         if self.heat_auto:
             self.heat_auto = False
             self.button_heating.background_normal = "pic/flame_off.png"
+            if self.heating:
+                self.change_heating_status()
         else:
             self.heat_auto = True
             self.button_heating.background_normal = "pic/flame_on.png"
@@ -148,16 +186,20 @@ class BurningPiApp(App):
             self.button_pump.background_normal = "pic/pump_on.png"
         
     def on_set_oil_temp_slider(self, *args):
+        self.oil_temp_set = int(args[1])
         self.set_oil_temp_label.text = str(int(args[1]))+" °C"
         
     def on_set_water_temp_slider(self, *args):
         self.set_water_temp_label.text = str(int(args[1]))+" °C"
         self.water_temp_max = int(args[1])
+        self.heating_image.source = 'pic/heating_on.png'
         
     def on_set_delta_heating_slider(self, *args):
+        self.delta_heating = int(args[1])
         self.set_delta_heating_label.text = str(int(args[1]))+" °C"
         
     def on_set_delta_cooling_slider(self, *args):
+        self.delta_cooling = int(args[1])
         self.set_delta_cooling_label.text = str(int(args[1]))+" °C"
 
 
@@ -195,8 +237,9 @@ class BurningPiApp(App):
         self.time_label = time_label
         temperatur_panel.add_widget(time_label)
         
-        heating_label = Label(text = "Heizt", color=[0,0,0,1], font_size = 30)
-        temperatur_panel.add_widget(heating_label)
+        heating_image = Image(source = 'pic/heating_off.png')
+        self.heating_image = heating_image
+        temperatur_panel.add_widget(heating_image)
         
         
         names_panel = BoxLayout(orientation="vertical")
@@ -317,13 +360,13 @@ class BurningPiApp(App):
             **graph_theme)
         self.graph_water = graph_water
         
-        plot_oil = SmoothLinePlot(color=rgb('0000ff'))
+        plot_oil = SmoothLinePlot(color=rgb('ff0000'))
         self.plot_oil = plot_oil
         
         plot_oil_set = SmoothLinePlot(color=rgb('00ff00'))
         self.plot_oil_set = plot_oil_set
         
-        plot_water = SmoothLinePlot(color=rgb('000000'))
+        plot_water = SmoothLinePlot(color=rgb('0000ff'))
         self.plot_water = plot_water
         plot_water.points = [(x, x * x) for x in range(0, 11)]
         graph_oil.add_plot(plot_oil)

@@ -1,16 +1,17 @@
 # coding: utf8
+from kivy.config import Config
+Config.set('graphics', 'height', 512)
+Config.set('graphics','width', 256)
+Config.set('graphics', 'resizable', '0')
+Config.write()
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
-from kivy.config import Config
 from kivy.uix.label import Label
 from kivy.uix.slider import Slider
 import time
 from kivy import args
 
-Config.set('graphics', 'height', 512)
-Config.set('graphics','width', 256)
-Config.set('graphics', 'resizable', '0')
-Config.write()
+
 
 
 class SimulateSensorApp(App):
