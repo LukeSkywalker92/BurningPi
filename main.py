@@ -54,9 +54,7 @@ class BurningPiApp(App):
     
     def build(self):
         self.icon = "pic/icon.png"
-        #Config.set('graphics', 'fullscreen', 'auto')
-        
-        #self.start_time.set(BurningPiApp, time.time())
+    
         self.start_time = time.time()
         
         self.get_config()
@@ -64,6 +62,7 @@ class BurningPiApp(App):
         layout = self.make_layout()
         
         Clock.schedule_interval(self.refresh_graph_scale, 1)
+        Clock.schedule_interval(self.check_water_temp, 1)
         
         return layout
     
@@ -98,6 +97,11 @@ class BurningPiApp(App):
         except:
             self.read_sensor()
 
+    def check_water_temp(self, *args):
+        if self.water_temp_is >= self.water_temp_max:
+            self.graph_water.background_color = rgb('fa5858')
+        else:
+            self.graph_water.background_color = rgb('ffffff')
     
     def refresh_graph_scale(self, *args):
         self.read_sensor()
@@ -148,6 +152,7 @@ class BurningPiApp(App):
         
     def on_set_water_temp_slider(self, *args):
         self.set_water_temp_label.text = str(int(args[1]))+" °C"
+        self.water_temp_max = int(args[1])
         
     def on_set_delta_heating_slider(self, *args):
         self.set_delta_heating_label.text = str(int(args[1]))+" °C"
