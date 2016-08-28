@@ -16,6 +16,11 @@ from kivy.uix.label import Label
 from kivy.graphics import Color, Rectangle
 from kivy.uix.slider import Slider
 
+Config.set('graphics', 'height', 540)
+Config.set('graphics','width', 960)
+Config.set('graphics', 'resizable', '0')
+Config.write()
+
 
 
 
@@ -48,7 +53,8 @@ class BurningPiApp(App):
     
     
     def build(self):
-        Config.set('graphics', 'fullscreen', 'auto')
+        self.icon = "pic/icon.png"
+        #Config.set('graphics', 'fullscreen', 'auto')
         
         #self.start_time.set(BurningPiApp, time.time())
         self.start_time = time.time()
@@ -336,8 +342,8 @@ class BurningPiApp(App):
     def get_config(self):
         with open('config.json') as config_file:
             config = json.load(config_file)
-        if config["fullscreen"]:
-            Config.set('graphics', 'fullscreen', 'auto')
+        #if config["fullscreen"]:
+            #Config.set('graphics', 'fullscreen', 'auto')
         self.temp_sensor_oil = config["sensor_oil"]
         self.temp_sensor_water = config["sensor_water"]
         print self.temp_sensor_oil
