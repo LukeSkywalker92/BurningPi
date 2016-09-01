@@ -1,11 +1,17 @@
 # coding: utf8
 from kivy.config import Config
-from kivy.uix.image import Image
-from pprint import pprint
-Config.set('graphics', 'height', 540)
-Config.set('graphics','width', 960)
+import json
+with open('config.json') as config_file:
+            config = json.load(config_file)
+if config["fullscreen"]:
+    Config.set('graphics', 'fullscreen', 'auto')
+else:
+    Config.set('graphics', 'fullscreen', 0)
+    Config.set('graphics', 'height', config["height"])
+    Config.set('graphics','width', config["width"])
 Config.set('graphics', 'resizable', '0')
 Config.write()
+from kivy.uix.image import Image
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -17,10 +23,11 @@ from kivy.properties import NumericProperty, BooleanProperty,\
     BoundedNumericProperty, StringProperty, ListProperty, ObjectProperty,\
     DictProperty, AliasProperty
 import time
-import json
 from kivy.uix.label import Label
 from kivy.graphics import Color, Rectangle
 from kivy.uix.slider import Slider
+from subprocess import Popen, PIPE, call
+import re
 
 
 
@@ -60,12 +67,15 @@ class BurningPiApp(App):
     
     def build(self):
         self.icon = "pic/icon.png"
-    
         self.start_time = time.time()
-        
         self.get_config()
         
+        
         layout = self.make_layout()
+        
+        if not self.config["debug"]:
+            self.oil_temp_is = self.tempdata1(self.temp_sensor_oil)
+            self.water_temp_is = self.tempdata1(self.temp_sensor_water)
         
         Clock.schedule_interval(self.refresh_graph_scale, 1)
         Clock.schedule_interval(self.check_water_temp, 1)
@@ -81,14 +91,19 @@ class BurningPiApp(App):
 
     def read_sensor(self, *args):
         try:
-            f = open(self.temp_sensor_oil)
-            oil_temp = float(f.read())
-            f.close()
-            
-            f = open(self.temp_sensor_water)
-            water_temp = float(f.read())
-            f.close()
-            
+            if self.config["debug"]:
+                f = open(self.temp_sensor_oil)
+                oil_temp = float(f.read())
+                f.close()
+                
+                f = open(self.temp_sensor_water)
+                water_temp = float(f.read())
+                f.close()
+                
+            else:
+                oil_temp = self.tempdata(self.temp_sensor_oil)
+                water_temp = self.tempdata(self.temp_sensor_water)
+                
             self.water_temps.append(water_temp)
             self.water_temp_is = water_temp
             
@@ -99,14 +114,45 @@ class BurningPiApp(App):
             self.times.append(time_is) 
             self.time_is = time_is
             self.oil_temps_set.append(self.set_oil_temp_slider.value)
-            
+
             self.refresh_plot_points()
         except:
             self.read_sensor()
 
+    def tempdata1(self, sensor):
+        pipe=Popen(["cat", sensor], stdout=PIPE)
+        result=pipe.communicate()[0]
+        result_list=result.split("=")
+        temp_mC=int(result_list[-1])/1000
+        if (re.match(".*YES.*", result)):
+            #print(abs(temp_mC-t_oil_ist.get()))
+            return temp_mC
+        else:
+            print(result)
+            print("invalid result")
+            return self.tempdata1(sensor)
+
+    def tempdata(self, sensor):
+        pipe=Popen(["cat", sensor], stdout=PIPE)
+        result=pipe.communicate()[0]
+        result_list=result.split("=")
+        temp_mC=int(result_list[-1])/1000
+        if sensor == self.temp_sensor_oil:
+            if (re.match(".*YES.*", result)) and (abs(temp_mC-self.oil_temp_is<15)):
+                return temp_mC
+            else:
+                print(result)
+                print("invalid result")
+                return self.tempdata(sensor)
+        if sensor == self.temp_sensor_water:
+            if (re.match(".*YES.*", result)) and (abs(temp_mC-self.water_temp_is<15)):
+                return temp_mC
+            else:
+                print(result)
+                print("invalid result")
+                return self.tempdata(sensor)
+
     def check_oil_temp(self, *args):
-        print(self.heat_auto)
-        print(self.heating)
         if self.heat_auto:
             if self.heating:
                 if self.oil_temp_is > (self.oil_temp_set - self.delta_heating):
@@ -115,7 +161,6 @@ class BurningPiApp(App):
                 if int(self.oil_temp_is) < int(self.oil_temp_set - self.delta_cooling):
                     self.change_heating_status()
             
-
     def check_water_temp(self, *args):
         if self.water_temp_is >= self.water_temp_max:
             if self.water_alarm:
@@ -137,8 +182,6 @@ class BurningPiApp(App):
             #GPIB
             self.heating = True
             
-    
-    
     def refresh_graph_scale(self, *args):
         self.read_sensor()
         
@@ -156,17 +199,13 @@ class BurningPiApp(App):
         
     def on_time_is(self, instance, value):
         self.time_label.text = str(int(self.time_is/60))+" min"
-        
-        
+              
     def on_oil_temp_is(self, instance, value):
         self.oil_temp_label.text = str(int(self.oil_temp_is))+" °C"
         
     def on_water_temp_is(self, instance, value):
         self.water_temp_label.text = str(int(self.water_temp_is))+" °C"
-        
-    def on_start_time(self, instance, value):
-        print('My property a changed to', value)
-        
+              
     def on_button_heating(self, *args):
         if self.heat_auto:
             self.heat_auto = False
@@ -201,8 +240,6 @@ class BurningPiApp(App):
     def on_set_delta_cooling_slider(self, *args):
         self.delta_cooling = int(args[1])
         self.set_delta_cooling_label.text = str(int(args[1]))+" °C"
-
-
 
     def make_layout(self):
         layout = BoxLayout(orientation="vertical")
@@ -390,10 +427,9 @@ class BurningPiApp(App):
     def get_config(self):
         with open('config.json') as config_file:
             config = json.load(config_file)
-        #if config["fullscreen"]:
-            #Config.set('graphics', 'fullscreen', 'auto')
-        self.temp_sensor_oil = config["sensor_oil"]
-        self.temp_sensor_water = config["sensor_water"]
+        self.config = config
+        self.temp_sensor_oil = self.config["sensor_oil"]
+        self.temp_sensor_water = self.config["sensor_water"]
         print self.temp_sensor_oil
         print self.temp_sensor_water
 
