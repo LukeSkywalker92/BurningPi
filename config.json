@@ -1,6 +1,6 @@
 {
   "fullscreen": false,
-  "debug": true,
+  "debug": false,
   "width": 960,
   "height": 540,
   "sensor_oil": "/sys/bus/w1/devices/28-02155377b2ff/w1_slave",

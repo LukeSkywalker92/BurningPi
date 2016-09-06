@@ -103,9 +103,9 @@ class BurningPiApp(App):
         self.oil_temp_is = self.tempdata1(self.temp_sensor_oil)
         self.water_temp_is = self.tempdata1(self.temp_sensor_water)
         
-        Clock.schedule_interval(self.refresh_graph_scale, 1)
-        Clock.schedule_interval(self.check_water_temp, 1)
-        Clock.schedule_interval(self.check_oil_temp, 1)
+        Clock.schedule_interval(self.refresh_graph_scale, 5)
+        Clock.schedule_interval(self.check_water_temp, 5)
+        Clock.schedule_interval(self.check_oil_temp, 5)
         
         
         
@@ -165,7 +165,7 @@ class BurningPiApp(App):
         except:
             self.read_sensor()
 
-    def tempdata1(self, sensor):
+    def tempdata10(self, sensor):
       
         # 1-wire Slave Datei lesen
         tempfile = open(sensor)
@@ -177,7 +177,7 @@ class BurningPiApp(App):
         temp_mC = float(stringvalue[2:]) / 1000
         return temp_mC
 
-    def tempdata12(self, sensor):
+    def tempdata1(self, sensor):
         pipe=Popen(["cat", sensor], stdout=PIPE)
         result=pipe.communicate()[0]
         result_list=result.split("=")
@@ -191,7 +191,7 @@ class BurningPiApp(App):
             return self.tempdata1(sensor)
         
         
-    def tempdata(self, sensor):
+    def tempdata0(self, sensor):
       
         # 1-wire Slave Datei lesen
         tempfile = open(sensor)
@@ -215,7 +215,7 @@ class BurningPiApp(App):
                 print("invalid result")
                 return self.tempdata(sensor)
 
-    def tempdata2(self, sensor):
+    def tempdata(self, sensor):
         pipe=Popen(["cat", sensor], stdout=PIPE)
         result=pipe.communicate()[0]
         result_list=result.split("=")
