@@ -30,7 +30,10 @@ from subprocess import Popen, PIPE, call
 import re
 import csv
 import sys
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except:
+    print("No GPIO")
 
 
 class BurningPiApp(App):
@@ -70,12 +73,18 @@ class BurningPiApp(App):
     def build(self):
         self.icon = "pic/icon.png"
         self.title = "Burning Pi"
-	GPIO.setmode(GPIO.BCM)
+        try:
+            GPIO.setmode(GPIO.BCM)
+        except:
+            pass
         self.start_time = time.time()
         self.get_config()
         
-	GPIO.setup(self.gpio_oil, GPIO.OUT, initial=GPIO.LOW)
-	GPIO.setup(self.gpio_water, GPIO.OUT, initial=GPIO.LOW)
+        try:
+            GPIO.setup(self.gpio_oil, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(self.gpio_water, GPIO.OUT, initial=GPIO.LOW)
+        except:
+            pass
 
 
         #f = open('www/oil.csv', 'wb')
@@ -214,12 +223,18 @@ class BurningPiApp(App):
         if self.heating:
             self.heating_image.source = 'pic/heating_off.png'
             #GPIO
-	    GPIO.output(self.gpio_oil, GPIO.HIGH)
+            try:
+                GPIO.output(self.gpio_oil, GPIO.HIGH)
+            except:
+                pass
             self.heating = False  
         else:
             self.heating_image.source = 'pic/heating_on.png'
             #GPIO
-	    GPIO.output(self.gpio_oil, GPIO.LOW)
+            try:
+                GPIO.output(self.gpio_oil, GPIO.LOW)
+            except:
+                pass
             self.heating = True
             
     def refresh_graph_scale(self, *args):
@@ -259,11 +274,17 @@ class BurningPiApp(App):
     def on_button_pump(self, *args):
         if self.pumping:
             self.pumping = False
-	    GPIO.output(self.gpio_water, GPIO.HIGH)
+            try:
+                GPIO.output(self.gpio_water, GPIO.HIGH)
+            except:
+                pass
             self.button_pump.background_normal = "pic/pump_off.png"
         else:
             self.pumping = True
-	    GPIO.output(self.gpio_water, GPIO.LOW)
+            try:
+                GPIO.output(self.gpio_water, GPIO.LOW)
+            except:
+                pass
             self.button_pump.background_normal = "pic/pump_on.png"
         
     def on_set_oil_temp_slider(self, *args):
@@ -297,8 +318,6 @@ class BurningPiApp(App):
         button_heating.bind(on_press=self.on_button_heating)
         self.button_heating = button_heating
         
-        
-        label_spacer = Label()
         
         
         button_pump = Button(background_normal="pic/pump_off.png", background_down="pic/pump_pressed.png",allow_stretch=False, size_hint=(0.7, 1), border=[0,0,0,0])
@@ -476,19 +495,25 @@ class BurningPiApp(App):
         with open('config.json') as config_file:
             config = json.load(config_file)
         self.config = config
-        self.temp_sensor_oil = self.config["sensor_oil"]
-        self.temp_sensor_water = self.config["sensor_water"]
-	self.gpio_oil = self.config["gpio_oil"]
-	self.gpio_water = self.config["gpio_water"]
+        if self.config["debug"]:
+            self.temp_sensor_oil = 'tests/testdata/sensor1'
+            self.temp_sensor_water = 'tests/testdata/sensor2'
+        else:
+            self.temp_sensor_oil = self.config["sensor_oil"]
+            self.temp_sensor_water = self.config["sensor_water"]
+        self.gpio_oil = self.config["gpio_oil"]
+        self.gpio_water = self.config["gpio_water"]
         print self.temp_sensor_oil
         print self.temp_sensor_water
         
     def on_stop(self):
         #GPIO Cleanup
-	GPIO.cleanup(self.gpio_oil)
-	GPIO.cleanup(self.gpio_water)
+        try:
+            GPIO.cleanup(self.gpio_oil)
+            GPIO.cleanup(self.gpio_water)
+        except:
+            pass
         print("Gestoppt")
-        print(self.on_off_layout.size)
         
         
 
