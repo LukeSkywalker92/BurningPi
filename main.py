@@ -103,9 +103,9 @@ class BurningPiApp(App):
         self.oil_temp_is = self.tempdata1(self.temp_sensor_oil)
         self.water_temp_is = self.tempdata1(self.temp_sensor_water)
         
-        Clock.schedule_interval(self.refresh_graph_scale, 5)
-        Clock.schedule_interval(self.check_water_temp, 5)
-        Clock.schedule_interval(self.check_oil_temp, 5)
+        Clock.schedule_interval(self.refresh_graph_scale, 1)
+        Clock.schedule_interval(self.check_water_temp, 1)
+        Clock.schedule_interval(self.check_oil_temp, 1)
         
         
         
