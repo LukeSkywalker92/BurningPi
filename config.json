@@ -3,8 +3,8 @@
   "debug": false,
   "width": 960,
   "height": 540,
-  "sensor_oil": "/sys/bus/w1/devices/28-02155377b2ff/w1_slave",
-  "sensor_water": "/sys/bus/w1/devices/28-02155370a7ff/w1_slave",
+  "sensor_oil": "/home/sysop/sensoroil",
+  "sensor_water": "/home/sysop/sensoroil",
   "gpio_oil": 26,
   "gpio_water": 19
 }
