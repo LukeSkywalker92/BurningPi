@@ -1,10 +1,10 @@
 {
   "fullscreen": false,
-  "debug": true,
+  "debug": false,
   "width": 960,
   "height": 540,
-  "sensor_oil": "tests/testdata/sensor1",
-  "sensor_water": "tests/testdata/sensor2",
-  "gpio_oil": 23,
-  "gpio_water": 22
+  "sensor_oil": "/sys/bus/w1/devices/28-02155377b2ff/w1_slave",
+  "sensor_water": "/sys/bus/w1/devices/28-02155370a7ff/w1_slave",
+  "gpio_oil": 19,
+  "gpio_water": 26
 }

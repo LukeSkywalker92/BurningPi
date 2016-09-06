@@ -30,7 +30,7 @@ from subprocess import Popen, PIPE, call
 import re
 import csv
 import sys
-
+import RPi.GPIO as GPIO
 
 
 class BurningPiApp(App):
@@ -62,23 +62,30 @@ class BurningPiApp(App):
     #Sensors
     temp_sensor_oil = StringProperty()
     temp_sensor_water = StringProperty()
-    
+    #GPIO
+    gpio_oil = NumericProperty()
+    gpio_water = NumericProperty()
     
     
     def build(self):
         self.icon = "pic/icon.png"
         self.title = "Burning Pi"
+	GPIO.setmode(GPIO.BCM)
         self.start_time = time.time()
         self.get_config()
         
-        f = open('www/oil.csv', 'wb')
+	GPIO.setup(self.gpio_oil, GPIO.OUT, initial=GPIO.LOW)
+	GPIO.setup(self.gpio_water, GPIO.OUT, initial=GPIO.LOW)
+
+
+        #f = open('www/oil.csv', 'wb')
 #         try:
 #             writer = csv.writer(f)
 #             writer.writerow( ('country',"visits") )
 #         finally:
 #             f.close()
-        f.write('')
-        f.close()
+        #f.write('')
+        #f.close()
         
         
         layout = self.make_layout()
@@ -87,9 +94,9 @@ class BurningPiApp(App):
             self.oil_temp_is = self.tempdata1(self.temp_sensor_oil)
             self.water_temp_is = self.tempdata1(self.temp_sensor_water)
         
-        Clock.schedule_interval(self.refresh_graph_scale, 1/60)
-        Clock.schedule_interval(self.check_water_temp, 1/60)
-        Clock.schedule_interval(self.check_oil_temp, 1/60)
+        Clock.schedule_interval(self.refresh_graph_scale, 1)
+        Clock.schedule_interval(self.check_water_temp, 1)
+        Clock.schedule_interval(self.check_oil_temp, 1)
         
         
         
@@ -136,12 +143,12 @@ class BurningPiApp(App):
             self.refresh_plot_points()
             
             
-            f = open('www/oil.csv', 'ab')
-            try:
-                writer = csv.writer(f)
-                writer.writerow( (str(time_is), str(oil_temp)) )
-            finally:
-                f.close()
+           # f = open('www/oil.csv', 'ab')
+           # try:
+           #     writer = csv.writer(f)
+           #     writer.writerow( (str(time_is), str(oil_temp)) )
+           # finally:
+           #     f.close()
             
             
         except:
@@ -206,11 +213,13 @@ class BurningPiApp(App):
     def change_heating_status(self):
         if self.heating:
             self.heating_image.source = 'pic/heating_off.png'
-            #GPIB
+            #GPIO
+	    GPIO.output(self.gpio_oil, GPIO.HIGH)
             self.heating = False  
         else:
             self.heating_image.source = 'pic/heating_on.png'
-            #GPIB
+            #GPIO
+	    GPIO.output(self.gpio_oil, GPIO.LOW)
             self.heating = True
             
     def refresh_graph_scale(self, *args):
@@ -250,9 +259,11 @@ class BurningPiApp(App):
     def on_button_pump(self, *args):
         if self.pumping:
             self.pumping = False
+	    GPIO.output(self.gpio_water, GPIO.HIGH)
             self.button_pump.background_normal = "pic/pump_off.png"
         else:
             self.pumping = True
+	    GPIO.output(self.gpio_water, GPIO.LOW)
             self.button_pump.background_normal = "pic/pump_on.png"
         
     def on_set_oil_temp_slider(self, *args):
@@ -467,11 +478,15 @@ class BurningPiApp(App):
         self.config = config
         self.temp_sensor_oil = self.config["sensor_oil"]
         self.temp_sensor_water = self.config["sensor_water"]
+	self.gpio_oil = self.config["gpio_oil"]
+	self.gpio_water = self.config["gpio_water"]
         print self.temp_sensor_oil
         print self.temp_sensor_water
         
     def on_stop(self):
         #GPIO Cleanup
+	GPIO.cleanup(self.gpio_oil)
+	GPIO.cleanup(self.gpio_water)
         print("Gestoppt")
         print(self.on_off_layout.size)
         
