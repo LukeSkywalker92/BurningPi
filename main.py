@@ -99,9 +99,9 @@ class BurningPiApp(App):
         
         layout = self.make_layout()
         
-        if not self.config["debug"]:
-            self.oil_temp_is = self.tempdata1(self.temp_sensor_oil)
-            self.water_temp_is = self.tempdata1(self.temp_sensor_water)
+        #if not self.config["debug"]:
+        self.oil_temp_is = self.tempdata1(self.temp_sensor_oil)
+        self.water_temp_is = self.tempdata1(self.temp_sensor_water)
         
         Clock.schedule_interval(self.refresh_graph_scale, 1)
         Clock.schedule_interval(self.check_water_temp, 1)
@@ -123,13 +123,15 @@ class BurningPiApp(App):
     def read_sensor(self, *args):
         try:
             if self.config["debug"]:
-                f = open(self.temp_sensor_oil)
-                oil_temp = float(f.read())
-                f.close()
-                
-                f = open(self.temp_sensor_water)
-                water_temp = float(f.read())
-                f.close()
+                oil_temp = self.tempdata(self.temp_sensor_oil)
+                water_temp = self.tempdata(self.temp_sensor_water)
+#                 f = open(self.temp_sensor_oil)
+#                 oil_temp = float(f.read())
+#                 f.close()
+#                 
+#                 f = open(self.temp_sensor_water)
+#                 water_temp = float(f.read())
+#                 f.close()
                 
             else:
                 oil_temp = self.tempdata(self.temp_sensor_oil)
@@ -164,6 +166,18 @@ class BurningPiApp(App):
             self.read_sensor()
 
     def tempdata1(self, sensor):
+      
+        # 1-wire Slave Datei lesen
+        tempfile = open(sensor)
+        filecontent = tempfile.read()
+        tempfile.close()
+     
+        # Temperaturwerte auslesen und konvertieren
+        stringvalue = filecontent.split("\n")[1].split(" ")[9]
+        temp_mC = float(stringvalue[2:]) / 1000
+        return temp_mC
+
+    def tempdata12(self, sensor):
         pipe=Popen(["cat", sensor], stdout=PIPE)
         result=pipe.communicate()[0]
         result_list=result.split("=")
@@ -175,8 +189,33 @@ class BurningPiApp(App):
             print(result)
             print("invalid result")
             return self.tempdata1(sensor)
-
+        
+        
     def tempdata(self, sensor):
+      
+        # 1-wire Slave Datei lesen
+        tempfile = open(sensor)
+        filecontent = tempfile.read()
+        tempfile.close()
+     
+        # Temperaturwerte auslesen und konvertieren
+        stringvalue = filecontent.split("\n")[1].split(" ")[9]
+        temp_mC = float(stringvalue[2:]) / 1000
+        
+        if sensor == self.temp_sensor_oil:
+            if (abs(temp_mC-self.oil_temp_is<15)):
+                return temp_mC
+            else:
+                print("invalid result")
+                return self.tempdata(sensor)
+        if sensor == self.temp_sensor_water:
+            if (abs(temp_mC-self.water_temp_is<15)):
+                return temp_mC
+            else:
+                print("invalid result")
+                return self.tempdata(sensor)
+
+    def tempdata2(self, sensor):
         pipe=Popen(["cat", sensor], stdout=PIPE)
         result=pipe.communicate()[0]
         result_list=result.split("=")
