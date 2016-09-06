@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>amCharts examples</title>
+        <link rel="stylesheet" href="style.css" type="text/css">
+        <script src="amcharts.js" type="text/javascript"></script>
+        <script src="serial.js" type="text/javascript"></script>
+        <script src="https://www.amcharts.com/lib/3/themes/light.js"></script>
+		<script src="https://www.amcharts.com/lib/3/plugins/dataloader/dataloader.min.js"></script>
+
+        <script>
+        AmCharts.loadFile( "oil.csv", {}, function( response ) {
+
+        	  /**
+        	   * Parse CSV
+        	   */
+        	  var data = AmCharts.parseCSV( response, {
+        	    "useColumnNames": false
+        	  } );
+
+        	  /**
+        	   * Create the chart
+        	   */
+        	  var chart = AmCharts.makeChart( "chartdiv", {
+        	    "type": "serial",
+        	    "theme": "light",
+        	    "dataProvider": data,
+        	    "valueAxes": [ {
+        	      "gridColor": "#FFFFFF",
+        	      "gridAlpha": 0.2,
+        	      "dashLength": 0
+        	    } ],
+        	    "gridAboveGraphs": true,
+        	    "startDuration": 1,
+        	    "graphs": [ {
+        	      "balloonText": "[[category]]: <b>[[value]]</b>",
+        	      "fillAlphas": 0.8,
+        	      "lineAlpha": 0.2,
+        	      "type": "column",
+        	      "valueField": "visits"
+        	    } ],
+        	    "chartCursor": {
+        	      "categoryBalloonEnabled": false,
+        	      "cursorAlpha": 0,
+        	      "zoomable": false
+        	    },
+        	    "categoryField": "country",
+        	    "categoryAxis": {
+        	      "gridPosition": "start",
+        	      "gridAlpha": 0,
+        	      "tickPosition": "start",
+        	      "tickLength": 20
+        	    }
+        	  } );
+
+        	} );
+        </script>
+    </head>
+
+    <body>
+        <div id="chartdiv" style="width: 100%; height: 400px;"></div>
+    </body>
+
+</html>

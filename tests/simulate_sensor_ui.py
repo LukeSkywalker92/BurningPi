@@ -1,5 +1,6 @@
 # coding: utf8
 from kivy.config import Config
+Config.set('graphics', 'fullscreen', 0)
 Config.set('graphics', 'height', 512)
 Config.set('graphics','width', 256)
 Config.set('graphics', 'resizable', '0')

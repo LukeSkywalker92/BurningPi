@@ -8,7 +8,7 @@ if config["fullscreen"]:
 else:
     Config.set('graphics', 'fullscreen', 0)
     Config.set('graphics', 'height', config["height"])
-    Config.set('graphics','width', config["width"])
+    Config.set('graphics', 'width', config["width"])
 Config.set('graphics', 'resizable', '0')
 Config.write()
 from kivy.uix.image import Image
@@ -28,9 +28,8 @@ from kivy.graphics import Color, Rectangle
 from kivy.uix.slider import Slider
 from subprocess import Popen, PIPE, call
 import re
-
-
-
+import csv
+import sys
 
 
 
@@ -50,7 +49,7 @@ class BurningPiApp(App):
     pumping = BooleanProperty(False)
     water_alarm = BooleanProperty(False)
     water_alarm_counter = NumericProperty(0)
-    
+
     #Start Time
     start_time = NumericProperty()
     
@@ -71,6 +70,15 @@ class BurningPiApp(App):
         self.title = "Burning Pi"
         self.start_time = time.time()
         self.get_config()
+        
+        f = open('www/oil.csv', 'wb')
+#         try:
+#             writer = csv.writer(f)
+#             writer.writerow( ('country',"visits") )
+#         finally:
+#             f.close()
+        f.write('')
+        f.close()
         
         
         layout = self.make_layout()
@@ -126,6 +134,16 @@ class BurningPiApp(App):
             self.oil_temps.append(oil_temp)
             self.times.append(time_is) 
             self.refresh_plot_points()
+            
+            
+            f = open('www/oil.csv', 'ab')
+            try:
+                writer = csv.writer(f)
+                writer.writerow( (str(time_is), str(oil_temp)) )
+            finally:
+                f.close()
+            
+            
         except:
             self.read_sensor()
 
@@ -464,3 +482,5 @@ class BurningPiApp(App):
     
 if __name__ == '__main__':
     BurningPiApp().run()
+    
+    
