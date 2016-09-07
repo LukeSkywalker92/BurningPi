@@ -56,13 +56,13 @@ class SimulateSensorApp(App):
     def on_oil_slider(self, *args):
         self.oil_temp_label.text = str(int(args[1]))+" °C"
         f = open("testdata/sensor1","w+")
-        f.write(str(int(args[1])))
+        f.write(str(1000*int(args[1])))
         f.close()
         
     def on_water_slider(self, *args):
         self.water_temp_label.text = str(int(args[1]))+" °C"
         f = open("testdata/sensor2","w+")
-        f.write(str(int(args[1])))
+        f.write(str(1000*int(args[1])))
         f.close()
     
 SimulateSensorApp().run()

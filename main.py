@@ -30,6 +30,7 @@ from subprocess import Popen, PIPE, call
 import re
 import csv
 import sys
+import os
 try:
     import RPi.GPIO as GPIO
 except:
@@ -86,7 +87,6 @@ class BurningPiApp(App):
         except:
             pass
 
-
         #f = open('www/oil.csv', 'wb')
 #         try:
 #             writer = csv.writer(f)
@@ -102,6 +102,15 @@ class BurningPiApp(App):
         #if not self.config["debug"]:
         self.oil_temp_is = self.tempdata1(self.temp_sensor_oil)
         self.water_temp_is = self.tempdata1(self.temp_sensor_water)
+        
+        my_dict = {'oil_is': self.oil_temp_is, 'oil_set': self.set_oil_temp_slider.value, 'time': 0, 'water': self.water_temp_is}
+        
+        with open('www/tempdata.json', 'w') as f:
+            f.write('[')
+            f.write(os.linesep)
+            json.dump(my_dict, f)
+            f.write(os.linesep)
+            f.write(']')
         
         Clock.schedule_interval(self.refresh_graph_scale, 1)
         Clock.schedule_interval(self.check_water_temp, 1)
@@ -153,6 +162,16 @@ class BurningPiApp(App):
             self.times.append(time_is) 
             self.refresh_plot_points()
             
+            my_dict = {'oil_is': oil_temp, 'oil_set': self.set_oil_temp_slider.value, 'time': int(time_is), 'water': water_temp}
+            
+            with open('www/tempdata.json', 'rb+') as f:
+                f.seek(-1, os.SEEK_END)
+                f.truncate()
+            with open('www/tempdata.json', 'a') as f:
+                f.write(',')
+                f.write(os.linesep)
+                json.dump(my_dict, f)
+                f.write(']')
             
            # f = open('www/oil.csv', 'ab')
            # try:

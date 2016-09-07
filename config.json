@@ -1,6 +1,6 @@
 {
   "fullscreen": false,
-  "debug": false,
+  "debug": true,
   "width": 960,
   "height": 540,
   "sensor_oil": "/home/sysop/sensoroil",
