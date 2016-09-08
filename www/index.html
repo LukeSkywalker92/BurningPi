@@ -79,10 +79,15 @@
 					"dataLoader": {
 					    "url": "tempdata.json",
 					    "format": "json",
-					    "reload": 1
+					    "reload": 1,
+					    "showCurtain": false,
+					    "showErrors": false
 					  }
 				}
 			);
+			setTimeout(function(){
+   				window.location.reload(1);
+				}, 20000);
 			
 			
 		</script>
