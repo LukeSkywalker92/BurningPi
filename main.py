@@ -53,6 +53,7 @@ class BurningPiApp(App):
     pumping = BooleanProperty(False)
     water_alarm = BooleanProperty(False)
     water_alarm_counter = NumericProperty(0)
+    web_counter = NumericProperty(0)
 
     #Start Time
     start_time = NumericProperty()
@@ -162,16 +163,20 @@ class BurningPiApp(App):
             self.times.append(time_is) 
             self.refresh_plot_points()
             
-            my_dict = {'oil_is': oil_temp, 'oil_set': self.set_oil_temp_slider.value, 'time': int(time_is), 'water': water_temp}
-            
-            with open('www/tempdata.json', 'rb+') as f:
-                f.seek(-1, os.SEEK_END)
-                f.truncate()
-            with open('www/tempdata.json', 'a') as f:
-                f.write(',')
-                f.write(os.linesep)
-                json.dump(my_dict, f)
-                f.write(']')
+            if self.web_counter == 5:
+                my_dict = {'oil_is': oil_temp, 'oil_set': self.set_oil_temp_slider.value, 'time': int(time_is), 'water': water_temp}
+                
+                with open('www/tempdata.json', 'rb+') as f:
+                    f.seek(-1, os.SEEK_END)
+                    f.truncate()
+                with open('www/tempdata.json', 'a') as f:
+                    f.write(',')
+                    f.write(os.linesep)
+                    json.dump(my_dict, f)
+                    f.write(']')
+                self.web_counter = 0
+            else:
+                self.web_counter += 1
             
            # f = open('www/oil.csv', 'ab')
            # try:
@@ -222,17 +227,17 @@ class BurningPiApp(App):
         temp_mC = float(filecontent) / 1000
         
         if sensor == self.temp_sensor_oil:
-            if (abs(temp_mC-self.oil_temp_is<15)):
+            if (abs(temp_mC-self.oil_temp_is<30)):
                 return temp_mC
             else:
                 print("invalid result")
-                return self.tempdata(sensor)
+                return self.oil_temp_is
         if sensor == self.temp_sensor_water:
-            if (abs(temp_mC-self.water_temp_is<15)):
+            if (abs(temp_mC-self.water_temp_is<30)):
                 return temp_mC
             else:
                 print("invalid result")
-                return self.tempdata(sensor)
+                return self.water_temp_is
 
     def tempdata0(self, sensor):
         pipe=Popen(["cat", sensor], stdout=PIPE)
@@ -265,7 +270,7 @@ class BurningPiApp(App):
             
     def check_water_temp(self, *args):
         if self.water_temp_is >= self.water_temp_max:
-            if self.water_alarm_counter == 60:
+            if self.water_alarm_counter == 5:
                 self.water_alarm_counter = 0
                 if self.water_alarm:
                     self.graph_water.background_color = rgb('ffffff')
